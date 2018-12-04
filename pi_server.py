@@ -1,7 +1,7 @@
 #coding:utf-8
 
 from socket import *
-import cv2
+#import cv2
 import RPi.GPIO as GPIO
 from components.image_processing import *
 from time import sleep
