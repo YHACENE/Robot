@@ -2,9 +2,25 @@
 
 from socket import *
 import cv2
+import RPi.GPIO as GPIO
 from components.image_processing import *
+from time import sleep
 
 ctr_cmds = ['forward', 'backward', 'left', 'right', 'get_video']
+
+
+GPIO.setwarnings(False)
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(14, GPIO.OUT, initial=GPIO.LOW)
+
+def allume():
+    while True:
+        GPIO.output(14, GPIO.HIGH)
+        sleep(1)
+        GPIO.output(14, GPIO.LOW)
+        sleep(1)
+
+
 
 HOST = ''
 PORT = 5566
@@ -29,6 +45,7 @@ while True:
                 break;
             if cmd == ctr_cmds[0]:
                 print("Forward")
+                allume()
             if cmd == ctr_cmds[1]:
                 print("Backward")
             if cmd == ctr_cmds[2]:
