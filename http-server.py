@@ -7,7 +7,7 @@ import string
 from functools import wraps
 
 PORT = 12000
-server_address = ('127.0.0.1', PORT)
+server_address = ('192.168.10.12', PORT)
 
 def hello():
 	result = {
@@ -68,7 +68,7 @@ if __name__ == '__main__':
 
 	httpd = SocketServer.TCPServer(("", PORT), MyHandler)
 
-	print("Serveur actif sur le port:127.0.0.1", PORT)
+	print("Serveur actif sur le port:", server_address)
 
 	#socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	#socket.bind(('', PORT)
