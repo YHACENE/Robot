@@ -14,12 +14,23 @@ from picamera import PiCamera
 import numpy
 import time
 
+from imutils.video import VideoStream
+from imutils.video import FPS
+import face_recognition
+import argparse
+import imutils
+import pickle
+"""
+ap = argparse.ArgumentParser()
+ap.add_argument("-c", "--cascade", re)
+"""
 class MyFactory(GstRtspServer.RTSPMediaFactory):
 	def __init__(self, **properties):
 		super(MyFactory, self).__init__(**properties)
-		self.cam = PiCamera()
+		self.cam = VideoStream(usePiCamera=True).start() #PiCamera()
 		self.classifer = cv2.CascadeClassifier("/usr/share/opencv/lbpcascades/lbpcascade_frontalface.xml")
 		self.cam.resolution  = (1920, 1088)
+		self.data = pickle.load(open("encodungs.pickle", "rb").read())
 		self.cam.framerate = 25.0
 		self.number_frame = 0
 		self.duration = 1 / 25.0 * Gst.SECOND
@@ -29,6 +40,8 @@ class MyFactory(GstRtspServer.RTSPMediaFactory):
                              '! videoconvert ! video/x-raw,format=I420 ' \
                              '! x264enc speed-preset=ultrafast tune=zerolatency threads=8 ' \
                              '! rtph264pay config-interval=1 name=pay0 pt=96'
+		time.sleep(2.0)
+		self.fps = FPS().start()
 	def get_faces(self, frame):
 		minisize = (frame.shape[1]/4, frame.shape[0]/4)
 		miniframe = cv2.resize(frame, minisize)
@@ -36,16 +49,43 @@ class MyFactory(GstRtspServer.RTSPMediaFactory):
 		return faces
 
 	def on_need_data(self, src, lenght):
-		ret, frame = self.cam.capture_continuous(self.rawcap, format="bgr", use_video_port=True)
+		ret, frame = self.cam.read()
+		frame = imutils.resize(frame, width=500)
 		if ret:
-			data = frame.array
-			faces = self.get_faces(data)
-			for f in faces:
-				x, y, w, h = [v*4 for v in f]
-				cv2.rectangle(data, (x,y), (x+w, y+h), (255,0,0))
+			gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+			rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+			#data = frame.array
+			faces = detector.detectMultiScale(gray, scaleFactor=1.1,
+				minNeighbors=5, minSize=(30, 30),
+				flags=cv2.CASCADE_SCALE_IMAGE)
 
-			buf = Gst.Buffer.new_allocate(None, len(data), None)
-			buf.fill(0, data)
+			boxes = [(y, x + w, y + h, x) for (x, y, w, h) in faces]
+			encodings = face_recognition.face_encodings(rgb, boxes)
+			names = []
+
+			for encodings in encodings:
+				matches = face_recognition.compare_faces(self.data["encodings"], encodings)
+				name = "Unknown"
+
+				if True in matches:
+					matchedIndexs = [i for (i, b) in enumerate(matches) if b]
+					counts = {}
+
+					for i in matchedIndexs:
+						name = self.data["name"][i]
+						counts[name] = counts.get(name, 0) +1
+
+					name = max(counts, key=counts.get)
+				names.append(name)
+			for ((top, right, bottom, left), name) in zoip(boxes, names):
+				cv2.rectangle(frame, (left, top), (right, bottom),
+					(0, 255, 0), 2)
+				y = top - 15 if top - 15 > 15 else top + 15
+				cv2.putText(frame, name, (left, y), cv2.FONT_HERSHEY_SIMPLEX,
+					0.75, (0, 255, 0), 2)
+
+			buf = Gst.Buffer.new_allocate(None, len(frame), None)
+			buf.fill(0, frame)
 			buf.duration = self.duration
 			timestamp = self.number_frames * self.duration
 			buf.pts = buf.dts = int(timestamp)
@@ -62,7 +102,7 @@ class MyFactory(GstRtspServer.RTSPMediaFactory):
 			#key = cv2.waitKey(1) & 0xFF
 			self.rawcap.truncate(0)
                         #if key == ord('q'):  break
-	
+
         def do_create_element(self, url):
 		return Gst.parse_launch(self.launch_string)
 
