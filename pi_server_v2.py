@@ -4,16 +4,18 @@
 from socket import *
 from time import sleep
 import threading
-from control_gpio import *
+from l298n import *
 
 HOST = ''
 PORT = 12000
 BUFSIZE = 1024
 ADDR = (HOST, PORT)
-"""ctr_cmds = {
-        "forward" : forward_pwm,
-        "stop" : stop_motor,
-}"""
+ctr_cmds = {
+        "forward" : forward,
+        "backward" : backward,
+        "left" : left,
+        "right" : right
+}
 class MyServer(threading.Thread):
 	def __init__(self, ip, port, clientsocket):
 		threading.Thread.__init__(self)
@@ -28,7 +30,7 @@ class MyServer(threading.Thread):
 
 		try:
 			if cmd is not None:
-				cmd()
+				cmd(5)
 
 		except KeyboardInterrupt as e:
 			print("#ERROR: {}".format(e))

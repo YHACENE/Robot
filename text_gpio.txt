@@ -1,0 +1,4 @@
+rouge = 22
+jaune = 17
+vert = 23
+bleu = 24
