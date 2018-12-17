@@ -22,10 +22,10 @@ class MyServer(threading.Thread):
 		self.ip = ip
 		self.port = port
 		self.clientsocket = clientsocket
-		#print("[+] Nouveau thread pour %s %s %s" % (self.ip, self.port,getThreadId(), ))
+		print("[+] Nouveau thread pour %s %s %s" % (self.ip, self.port,getThreadId(), ))
 
 	def run(self):
-		#print("Connexion de %s %s" % (self.ip, self.port, ))
+		print("Connexion de %s %s" % (self.ip, self.port, ))
 		cmd = ctr_cmds.get(self.clientsocket.recv(BUFSIZE), None)
 
 		try:
