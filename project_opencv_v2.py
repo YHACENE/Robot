@@ -9,8 +9,8 @@ gi.require_version('Gst', '1.0')
 gi.require_version('GstRtspServer', '1.0')
 from gi.repository import GObject, Gst, GstRtspServer
 import cv2
-from picamera.array import PiRGBArray
-from picamera import PiCamera
+#from picamera.array import PiRGBArray
+#from picamera import PiCamera
 import numpy
 import time
 
@@ -103,7 +103,7 @@ class MyFactory(GstRtspServer.RTSPMediaFactory):
 			self.rawcap.truncate(0)
                         #if key == ord('q'):  break
 
-        def do_create_element(self, url):
+	def do_create_element(self, url):
 		return Gst.parse_launch(self.launch_string)
 
 	def do_configure(self, rtsp_media):
